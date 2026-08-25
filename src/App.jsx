@@ -2149,13 +2149,23 @@ export default function App() {
               )}
             </div>
 
-            <div className="flex justify-end pt-2">
+            <div className="flex flex-col items-end pt-2">
               <button
                 onClick={skipSpeaking}
-                className="text-slate-400 text-sm font-bold hover:text-slate-600 bg-slate-100 px-3 py-1 rounded-lg"
+                disabled={attemptCount < 3}
+                className={`text-sm font-bold px-3 py-1 rounded-lg transition-colors ${
+                  attemptCount < 3
+                    ? 'text-slate-300 bg-slate-50 cursor-not-allowed'
+                    : 'text-slate-500 bg-slate-100 hover:text-slate-700 hover:bg-slate-200'
+                }`}
               >
-                PASS (선생님용)
+                {attemptCount < 3 ? `PASS (${3 - attemptCount}번 더 시도)` : 'PASS'}
               </button>
+              {attemptCount < 3 && (
+                <p className="text-xs text-slate-400 mt-1">
+                  최소 3번은 도전해야 PASS를 누를 수 있어요 💪
+                </p>
+              )}
             </div>
           </div>
         </div>
