@@ -853,8 +853,11 @@ export default function App() {
       console.error('Speech recognition error:', event.error);
       isListeningRef.current = false;
       setIsListening(false);
-      if (event.error !== 'no-speech' && event.error !== 'aborted') {
-        setFeedback('마이크 연결이 불안정합니다. 다시 버튼을 눌러주세요! 🎤');
+      // 사용자가 재시작하며 이전 인식을 중단(abort)한 경우는 시도로 세지 않음
+      if (event.error === 'aborted') return;
+      // 무응답(no-speech)·마이크 오류도 한 번의 시도로 집계 → 3번이면 자동으로 넘어감
+      if (currentTaskRef.current) {
+        registerFailedAttempt(event.error === 'no-speech' ? 'nospeech' : 'error');
       }
     };
 
@@ -876,6 +879,29 @@ export default function App() {
       isListeningRef.current = false;
       setIsListening(false);
     }
+  };
+
+  // 실패한 시도(오답·무응답·마이크 오류)를 1회로 집계하고, 3번이면 자동으로 다음 차례로 넘김
+  const registerFailedAttempt = (reason) => {
+    setAttemptCount((c) => {
+      if (c >= 3) return c; // 이미 넘어가는 중이면 중복 처리 방지
+      const next = c + 1;
+      if (next >= 3) {
+        setFeedback('정말 잘했어요! 다음 차례로 넘어갈게요 🌟');
+        speakText('Great job!');
+        setTimeout(() => {
+          setGameState('playing');
+          setTurn('ai');
+        }, 2500);
+      } else if (reason === 'nospeech') {
+        setFeedback(`목소리가 안 들렸어요. 다시 도전! (${next}/3번째 시도) 🔊`);
+      } else if (reason === 'error') {
+        setFeedback(`마이크가 불안정해요. 다시 도전! (${next}/3번째 시도) 🎤`);
+      } else {
+        setFeedback(`다시 한 번 해볼까요? (${next}/3번째 시도)`);
+      }
+      return next;
+    });
   };
 
   const checkAnswerRef = (transcripts, task) => {
@@ -906,20 +932,7 @@ export default function App() {
     }
 
     // 오답: 3번 시도하면 격려하고 자동으로 다음 차례로 넘김
-    setAttemptCount((c) => {
-      const next = c + 1;
-      if (next >= 3) {
-        setFeedback('정말 잘했어요! 다음 차례로 넘어갈게요 🌟');
-        speakText('Great job!');
-        setTimeout(() => {
-          setGameState('playing');
-          setTurn('ai');
-        }, 2500);
-      } else {
-        setFeedback(`다시 한 번 해볼까요? (${next}/3번째 시도)`);
-      }
-      return next;
-    });
+    registerFailedAttempt('wrong');
   };
 
   const startAiSpeakingTask = (cell) => {
