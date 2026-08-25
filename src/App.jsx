@@ -958,11 +958,6 @@ export default function App() {
     }, 1000);
   };
 
-  const skipSpeaking = () => {
-    setGameState('playing');
-    setTurn('ai');
-  };
-
   const stopPreviewRec = () => {
     if (previewRecRef.current) {
       try { previewRecRef.current.abort(); } catch (e) { /* 무시 */ }
@@ -2149,24 +2144,6 @@ export default function App() {
               )}
             </div>
 
-            <div className="flex flex-col items-end pt-2">
-              <button
-                onClick={skipSpeaking}
-                disabled={attemptCount < 3}
-                className={`text-sm font-bold px-3 py-1 rounded-lg transition-colors ${
-                  attemptCount < 3
-                    ? 'text-slate-300 bg-slate-50 cursor-not-allowed'
-                    : 'text-slate-500 bg-slate-100 hover:text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                {attemptCount < 3 ? `PASS (${3 - attemptCount}번 더 시도)` : 'PASS'}
-              </button>
-              {attemptCount < 3 && (
-                <p className="text-xs text-slate-400 mt-1">
-                  최소 3번은 도전해야 PASS를 누를 수 있어요 💪
-                </p>
-              )}
-            </div>
           </div>
         </div>
       )}
